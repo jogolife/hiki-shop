@@ -19,6 +19,8 @@ interface CheckoutPortalModalProps {
   product: Product | null;
   cartItems?: CartItem[];
   onSuccessPurchase: (orderInfo: any) => void;
+  officialStoreLink?: string;
+  redirectionType?: 'product' | 'global';
 }
 
 export default function CheckoutPortalModal({
@@ -26,7 +28,9 @@ export default function CheckoutPortalModal({
   onClose,
   product,
   cartItems = [],
-  onSuccessPurchase
+  onSuccessPurchase,
+  officialStoreLink = '',
+  redirectionType = 'product'
 }: CheckoutPortalModalProps) {
   const [activeMethod, setActiveMethod] = useState<'affiliate' | 'stripe' | 'pix'>('affiliate');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -91,10 +95,16 @@ export default function CheckoutPortalModal({
   }, [isOpen, activeMethod, isRedirectActive, redirectCount]);
 
   const handleFinalRedirect = () => {
-    if (product) {
-      window.location.href = product.affiliateLink;
+    if (redirectionType === 'global' && officialStoreLink) {
+      window.location.href = officialStoreLink;
+    } else if (product) {
+      window.location.href = product.affiliateLink || officialStoreLink || 'https://shopee.com.br/hiki-ofertas';
     } else if (cartItems.length > 0) {
-      window.location.href = cartItems[0].product.affiliateLink;
+      window.location.href = cartItems[0].product.affiliateLink || officialStoreLink || 'https://shopee.com.br/hiki-ofertas';
+    } else if (officialStoreLink) {
+      window.location.href = officialStoreLink;
+    } else {
+      window.location.href = 'https://shopee.com.br/hiki-ofertas';
     }
   };
 
@@ -339,8 +349,8 @@ export default function CheckoutPortalModal({
                           <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" />
                           <span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" />
                         </div>
-                        <div className="bg-white/80 border border-slate-300 rounded px-3 py-0.5 text-[9.5px] text-slate-500 font-mono w-44 truncate text-center">
-                          {product ? product.affiliateLink : "shopee.com.br/hiki-ofertas"}
+                        <div className="bg-white/80 border border-slate-300 rounded px-3 py-0.5 text-[9.5px] text-slate-500 font-mono w-44 truncate text-center" title={redirectionType === 'global' && officialStoreLink ? officialStoreLink : (product ? product.affiliateLink : "shopee.com.br/hiki-ofertas")}>
+                          {redirectionType === 'global' && officialStoreLink ? officialStoreLink : (product ? product.affiliateLink : "shopee.com.br/hiki-ofertas")}
                         </div>
                         <span className="text-[9.5px] font-black uppercase text-slate-400 tracking-wide bg-white px-2 py-0.5 rounded border border-slate-200">Parceiro</span>
                       </div>

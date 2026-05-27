@@ -21,6 +21,10 @@ interface AdminPanelProps {
   onDeleteProduct: (id: string) => void;
   onUpdateBanners: (banners: PromoBanner[]) => void;
   onResetCatalog: () => void;
+  officialStoreLink: string;
+  onUpdateOfficialStoreLink: (link: string) => void;
+  redirectionType: 'product' | 'global';
+  onUpdateRedirectionType: (type: 'product' | 'global') => void;
 }
 
 export default function AdminPanel({
@@ -31,9 +35,34 @@ export default function AdminPanel({
   onEditProduct,
   onDeleteProduct,
   onUpdateBanners,
-  onResetCatalog
+  onResetCatalog,
+  officialStoreLink,
+  onUpdateOfficialStoreLink,
+  redirectionType,
+  onUpdateRedirectionType
 }: AdminPanelProps) {
-  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'analytics'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'banners' | 'analytics' | 'settings'>('products');
+
+  // Official Store States
+  const [officialStoreLinkState, setOfficialStoreLinkState] = useState(officialStoreLink);
+  const [redirectionTypeState, setRedirectionTypeState] = useState(redirectionType);
+
+  // Sync state if values change
+  React.useEffect(() => {
+    setOfficialStoreLinkState(officialStoreLink);
+  }, [officialStoreLink]);
+
+  React.useEffect(() => {
+    setRedirectionTypeState(redirectionType);
+  }, [redirectionType]);
+
+  const handleSaveSettings = () => {
+    onUpdateOfficialStoreLink(officialStoreLinkState);
+    onUpdateRedirectionType(redirectionTypeState);
+    
+    // Alert success beautifully
+    alert('✓ Configurações da Loja Oficial salvas com sucesso!');
+  };
 
   // Add Product Form State
   const [newTitle, setNewTitle] = useState('');
@@ -232,6 +261,18 @@ export default function AdminPanel({
           <span className="flex items-center gap-1.5">
             <BarChart3 className="w-4 h-4" />
             Relatórios de Cliques ({clicks.reduce((acc, c) => acc + c.clickCount, 0)} cliques)
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`pb-3 px-1 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'settings' ? 'border-orange-500 text-gray-950' : 'border-transparent text-gray-400 hover:text-gray-700'
+          }`}
+          id="admin-tab-settings"
+        >
+          <span className="flex items-center gap-1.5">
+            <Settings className="w-4 h-4" />
+            Loja Oficial & Redirecionamento
           </span>
         </button>
       </div>
@@ -703,6 +744,110 @@ export default function AdminPanel({
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* SETTINGS / OFFICIAL STORE TAB CONTENT */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6 animate-fade-in" id="admin-settings-tab-content">
+          <div className="bg-orange-50/50 p-5 border border-orange-100 rounded-2xl flex items-start gap-3">
+            <Settings className="text-orange-600 w-5 h-5 shrink-0 mt-0.5 animate-spin-slow" />
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-orange-950 uppercase tracking-wide">Configurações de Redirecionamento de Clientes</h3>
+              <p className="text-xs text-orange-800 leading-relaxed font-semibold">
+                Defina o link oficial da sua <strong>Loja Oficial</strong> e escolha como os clientes serão redirecionados quando clicarem nos botões de compra ou finalizarem carrinho.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 bg-gray-50/50 border border-gray-150 p-6 rounded-2xl space-y-6">
+              
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider">Link de Afiliado da Loja Oficial Principal</label>
+                <p className="text-[11px] text-gray-400 font-medium">Insira o link global de afiliado da sua loja (Ex: sua coleção oficial da Shopee, link geral de associado Amazon, ou página agregadora).</p>
+                <input
+                  type="url"
+                  value={officialStoreLinkState}
+                  onChange={(e) => setOfficialStoreLinkState(e.target.value)}
+                  placeholder="https://shopee.com.br/minha-colecao-oficial"
+                  className="w-full text-xs p-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 font-mono text-blue-700"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-xs font-black text-gray-700 uppercase tracking-wider">Comportamento de Redirecionamento</label>
+                <p className="text-[11px] text-gray-400 font-medium">Configure para onde os clientes serão enviados ao clicar em comprar ou finalizar pedidos:</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Option 1: Product Specific */}
+                  <div 
+                    onClick={() => setRedirectionTypeState('product')}
+                    className={`border p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between h-32 select-none ${
+                      redirectionTypeState === 'product'
+                        ? 'border-orange-500 bg-orange-50/30'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <span className="text-[9px] font-black uppercase text-slate-400 block mb-1">Por Produto</span>
+                      <h4 className="text-xs font-black text-slate-800 uppercase">Link do Produto Individual</h4>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-snug font-medium">O cliente será levado diretamente para o link de afiliado cadastrado na página daquele produto.</p>
+                  </div>
+
+                  {/* Option 2: Global Official Link */}
+                  <div 
+                    onClick={() => setRedirectionTypeState('global')}
+                    className={`border p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between h-32 select-none ${
+                      redirectionTypeState === 'global'
+                        ? 'border-orange-500 bg-orange-50/30'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div>
+                      <span className="text-[9px] font-black uppercase text-slate-400 block mb-1">Geral / Único</span>
+                      <h4 className="text-xs font-black text-slate-800 uppercase">Link da Loja Oficial Geral</h4>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-snug font-medium">Qualquer clique em comprar levará o cliente para o seu link principal configurado acima.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-150 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSaveSettings}
+                  className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer"
+                  id="save-official-settings-btn"
+                >
+                  Salvar Configurações
+                </button>
+              </div>
+
+            </div>
+
+            <div className="bg-orange-50/10 p-5 rounded-2xl border border-orange-100 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <span className="text-[9px] uppercase font-black tracking-widest text-orange-600">Simulação de Rota de Venda</span>
+                <h4 className="text-xs font-black text-slate-900 leading-snug uppercase">Fluxo Ativo de Redireção</h4>
+                <p className="text-[10px] text-slate-500 font-semibold leading-normal">
+                  Com as atuais definições da loja, qualquer botão de redirecionamento enviará os clientes para:
+                </p>
+                <div className="p-3 bg-white border border-slate-150 rounded-xl space-y-1">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">URL Destino Final:</span>
+                  <p className="text-[10px] font-mono font-black text-orange-600 truncate" title={redirectionTypeState === 'global' ? officialStoreLinkState : 'Link inserido na ficha de cada produto'}>
+                    {redirectionTypeState === 'global' ? (officialStoreLinkState || 'https://shopee.com.br/hiki-ofertas') : 'Link do produto correspondente'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-[10px] text-slate-500 leading-snug space-y-1 bg-white p-3 border border-slate-150 rounded-xl font-medium">
+                <p className="font-bold text-slate-700 uppercase">💡 Dica de Afiliado:</p>
+                <p>Usar a redirection global é ideal quando você quer centralizar o engajamento em sua página de cupons ou agregador principal!</p>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -39,6 +39,10 @@ export default function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
 
+  // Official Store Redirection Settings
+  const [officialStoreLink, setOfficialStoreLink] = useState('https://shopee.com.br/hiki-ofertas');
+  const [redirectionType, setRedirectionType] = useState<'product' | 'global'>('product');
+
   // Owner Auth & Security States
   const [isOwner, setIsOwner] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -112,9 +116,34 @@ export default function App() {
     // Owner Auth
     const isOwnerAuth = localStorage.getItem('vitrine_owner_auth') === 'true';
     setIsOwner(isOwnerAuth);
+
+    // Official Store Redirection Settings
+    const storedStoreLink = localStorage.getItem('vitrine_official_store_link');
+    if (storedStoreLink) {
+      setOfficialStoreLink(storedStoreLink);
+    } else {
+      localStorage.setItem('vitrine_official_store_link', 'https://shopee.com.br/hiki-ofertas');
+    }
+
+    const storedRedirType = localStorage.getItem('vitrine_redirection_type');
+    if (storedRedirType) {
+      setRedirectionType(storedRedirType as 'product' | 'global');
+    } else {
+      localStorage.setItem('vitrine_redirection_type', 'product');
+    }
   }, []);
 
   // --- LOCAL PERSISTENCE HELPERS ---
+  const handleUpdateOfficialStoreLink = (link: string) => {
+    setOfficialStoreLink(link);
+    localStorage.setItem('vitrine_official_store_link', link);
+  };
+
+  const handleUpdateRedirectionType = (type: 'product' | 'global') => {
+    setRedirectionType(type);
+    localStorage.setItem('vitrine_redirection_type', type);
+  };
+
   const saveProductsToLocal = (updatedProds: Product[]) => {
     setProducts(updatedProds);
     localStorage.setItem('vitrine_products', JSON.stringify(updatedProds));
@@ -283,9 +312,10 @@ export default function App() {
 
     if (redirectTimer === 0) {
       // Execute final absolute marketplace redirect as mandated
-      window.location.href = redirectingProduct.affiliateLink;
-      // Backup just in case: open in a new tab if iframe blocks direct top redirection
-      // window.open(redirectingProduct.affiliateLink, '_blank');
+      const finalLink = redirectionType === 'global' && officialStoreLink 
+        ? officialStoreLink 
+        : (redirectingProduct.affiliateLink || officialStoreLink || 'https://shopee.com.br/hiki-ofertas');
+      window.location.href = finalLink;
       setRedirectingProduct(null);
       return;
     }
@@ -510,6 +540,10 @@ export default function App() {
                 onDeleteProduct={handleDeleteProductAdmin}
                 onUpdateBanners={handleUpdateBannersAdmin}
                 onResetCatalog={handleResetCatalogToDefault}
+                officialStoreLink={officialStoreLink}
+                onUpdateOfficialStoreLink={handleUpdateOfficialStoreLink}
+                redirectionType={redirectionType}
+                onUpdateRedirectionType={handleUpdateRedirectionType}
               />
             </motion.div>
           ) : (
@@ -722,6 +756,8 @@ export default function App() {
         product={checkoutProduct}
         cartItems={cart}
         onSuccessPurchase={handleSuccessPurchase}
+        officialStoreLink={officialStoreLink}
+        redirectionType={redirectionType}
       />
 
       {/* --- REDIRECTING OVERLAY LOADING INDICATOR --- */}
