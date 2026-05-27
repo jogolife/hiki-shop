@@ -520,15 +520,143 @@ export default function App() {
       {/* --- MAIN BODY WORKSPACE --- */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-10">
         
-        {/* If Admin panel toggled */}
+        {/* Catalog container - Always Visible */}
+        <div className="space-y-10" id="catalog-workspace-panel-anchor">
+          {/* Highlight promotional active banner */}
+          <PromoBanner 
+            banners={banners} 
+            onBannerClick={(b) => {
+              if (b.link?.startsWith('#')) {
+                const cleanCat = b.link.replace('#', '');
+                setSelectedCategory(cleanCat);
+              }
+            }}
+          />
+
+          {/* SECTION: DAILY DEALS (Shopee "Ofertas do Dia" style) */}
+          {dailyDeals.length > 0 && (
+            <section className="space-y-4" id="daily-deals-section-view">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900 border-l-4 border-orange-600 rounded-lg p-4 sm:p-5 text-white shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl sm:text-3xl">⚡</span>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-black tracking-widest uppercase flex items-center gap-1.5 font-sans">
+                      Ofertas Relâmpago do Dia
+                    </h2>
+                    <p className="text-xs text-slate-300 font-bold">
+                      Preços inéditos de parceiros oficiais. Links promocionais expiram em breve!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-slate-800 px-3.5 py-1.5 rounded-sm border border-slate-700 text-[10.5px] font-mono font-black uppercase tracking-wider shrink-0 self-end sm:self-auto text-orange-400">
+                  <Clock className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+                  <span>Descontos Verificados</span>
+                </div>
+              </div>
+
+              {/* Grid product items */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                {dailyDeals.map((prod) => (
+                  <ProductCard
+                    key={prod.id}
+                    product={prod}
+                    onAddToCart={handleAddToCart}
+                    onViewDetails={(p) => setSelectedProductDetails(p)}
+                    onAffiliateRedirect={(p) => {
+                      setCheckoutProduct(p);
+                      setIsCheckoutOpen(true);
+                    }}
+                    isInWishlist={wishlist.some((w) => w.id === prod.id)}
+                    onToggleWishlist={handleToggleWishlist}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* SECTION: GENERAL PRODUCTS GRID */}
+          <section className="space-y-4" id="regular-catalog-section-view">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
+                  <TrendingUp className="w-4 h-4 text-orange-600" />
+                  Recomendados Para Você
+                </h2>
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">As melhores oportunidades com base nos links de hoje.</p>
+              </div>
+
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-sm">
+                {filteredProducts.length} Produtos
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+              {/* Dynamic Sidebar Filters - Column 1 */}
+              <div className="lg:col-span-1 lg:sticky lg:top-44">
+                <AdvancedFilters
+                  products={products}
+                  currentCategory={selectedCategory}
+                  filters={filterState}
+                  onChange={setFilterState}
+                  onClear={handleClearFilters}
+                />
+              </div>
+
+              {/* Main Product Showcase - Column 3 */}
+              <div className="lg:col-span-3">
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-16 bg-white rounded-lg border border-slate-200 shadow-sm max-w-xl mx-auto space-y-4">
+                    <span className="text-4xl block">🔎</span>
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Nenhum produto em destaque encontrado</h3>
+                    <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                      Não encontramos correspondência para os filtros e pesquisa informados. Tente limpar os filtros avançados ou alterar sua busca!
+                    </p>
+                    <button
+                      onClick={handleClearFilters}
+                      className="px-4 py-2 bg-slate-900 hover:bg-orange-600 text-white font-extrabold text-[10.5px] uppercase tracking-wider rounded-md transition-all cursor-pointer border border-transparent"
+                    >
+                      Limpar Filtros Avançados
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {regularProducts.map((prod) => (
+                      <ProductCard
+                        key={prod.id}
+                        product={prod}
+                        onAddToCart={handleAddToCart}
+                        onViewDetails={(p) => setSelectedProductDetails(p)}
+                        onAffiliateRedirect={(p) => {
+                          setCheckoutProduct(p);
+                          setIsCheckoutOpen(true);
+                        }}
+                        isInWishlist={wishlist.some((w) => w.id === prod.id)}
+                        onToggleWishlist={handleToggleWishlist}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION: INTEGRATED GOOGLE SEO OPTIMIZER DEMONSTRATION PANEL */}
+          <section id="integrated-seo-demonstration">
+            <SEOSection products={products} />
+          </section>
+        </div>
+
+        {/* --- DISCREET ADMIN PANEL AT THE BOTTOM OF THE PAGE --- */}
         <AnimatePresence mode="wait">
-          {isAdminMode && isOwner ? (
+          {isAdminMode && isOwner && (
             <motion.div
               key="admin-workspace-view"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="pt-10 border-t border-slate-200 mt-10"
               id="admin-workspace-panel-anchor"
             >
               <AdminPanel
@@ -545,140 +673,6 @@ export default function App() {
                 redirectionType={redirectionType}
                 onUpdateRedirectionType={handleUpdateRedirectionType}
               />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="catalog-workspace-view"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-10"
-              id="catalog-workspace-panel-anchor"
-            >
-              {/* Highlight promotional active banner */}
-              <PromoBanner 
-                banners={banners} 
-                onBannerClick={(b) => {
-                  if (b.link?.startsWith('#')) {
-                    const cleanCat = b.link.replace('#', '');
-                    setSelectedCategory(cleanCat);
-                  }
-                }}
-              />
-
-              {/* SECTION: DAILY DEALS (Shopee "Ofertas do Dia" style) */}
-              {dailyDeals.length > 0 && (
-                <section className="space-y-4" id="daily-deals-section-view">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900 border-l-4 border-orange-600 rounded-lg p-4 sm:p-5 text-white shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl sm:text-3xl">⚡</span>
-                      <div>
-                        <h2 className="text-sm sm:text-base font-black tracking-widest uppercase flex items-center gap-1.5 font-sans">
-                          Ofertas Relâmpago do Dia
-                        </h2>
-                        <p className="text-xs text-slate-300 font-bold">
-                          Preços inéditos de parceiros oficiais. Links promocionais expiram em breve!
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 bg-slate-800 px-3.5 py-1.5 rounded-sm border border-slate-700 text-[10.5px] font-mono font-black uppercase tracking-wider shrink-0 self-end sm:self-auto text-orange-400">
-                      <Clock className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-                      <span>Descontos Verificados</span>
-                    </div>
-                  </div>
-
-                  {/* Grid product items */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {dailyDeals.map((prod) => (
-                      <ProductCard
-                        key={prod.id}
-                        product={prod}
-                        onAddToCart={handleAddToCart}
-                        onViewDetails={(p) => setSelectedProductDetails(p)}
-                        onAffiliateRedirect={(p) => {
-                          setCheckoutProduct(p);
-                          setIsCheckoutOpen(true);
-                        }}
-                        isInWishlist={wishlist.some((w) => w.id === prod.id)}
-                        onToggleWishlist={handleToggleWishlist}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* SECTION: GENERAL PRODUCTS GRID */}
-              <section className="space-y-4" id="regular-catalog-section-view">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                  <div>
-                    <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5">
-                      <TrendingUp className="w-4 h-4 text-orange-600" />
-                      Recomendados Para Você
-                    </h2>
-                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">As melhores oportunidades com base nos links de hoje.</p>
-                  </div>
-
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-sm">
-                    {filteredProducts.length} Produtos
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-                  {/* Dynamic Sidebar Filters - Column 1 */}
-                  <div className="lg:col-span-1 lg:sticky lg:top-44">
-                    <AdvancedFilters
-                      products={products}
-                      currentCategory={selectedCategory}
-                      filters={filterState}
-                      onChange={setFilterState}
-                      onClear={handleClearFilters}
-                    />
-                  </div>
-
-                  {/* Main Product Showcase - Column 3 */}
-                  <div className="lg:col-span-3">
-                    {filteredProducts.length === 0 ? (
-                      <div className="text-center py-16 bg-white rounded-lg border border-slate-200 shadow-sm max-w-xl mx-auto space-y-4">
-                        <span className="text-4xl block">🔎</span>
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Nenhum produto em destaque encontrado</h3>
-                        <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                          Não encontramos correspondência para os filtros e pesquisa informados. Tente limpar os filtros avançados ou alterar sua busca!
-                        </p>
-                        <button
-                          onClick={handleClearFilters}
-                          className="px-4 py-2 bg-slate-900 hover:bg-orange-600 text-white font-extrabold text-[10.5px] uppercase tracking-wider rounded-md transition-all cursor-pointer border border-transparent"
-                        >
-                          Limpar Filtros Avançados
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {regularProducts.map((prod) => (
-                          <ProductCard
-                            key={prod.id}
-                            product={prod}
-                            onAddToCart={handleAddToCart}
-                            onViewDetails={(p) => setSelectedProductDetails(p)}
-                            onAffiliateRedirect={(p) => {
-                              setCheckoutProduct(p);
-                              setIsCheckoutOpen(true);
-                            }}
-                            isInWishlist={wishlist.some((w) => w.id === prod.id)}
-                            onToggleWishlist={handleToggleWishlist}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              {/* SECTION: INTEGRATED GOOGLE SEO OPTIMIZER DEMONSTRATION PANEL */}
-              <section id="integrated-seo-demonstration">
-                <SEOSection products={products} />
-              </section>
-
             </motion.div>
           )}
         </AnimatePresence>
@@ -704,18 +698,26 @@ export default function App() {
 
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
             &copy; 2026 Hiki Shop - Desenvolvido para máxima conversão e SEO otimizado no Google Brasil
-            {!isOwner ? (
-              <span
-                onClick={() => setIsLoginModalOpen(true)}
-                className="cursor-pointer text-slate-500 hover:text-orange-500 font-black transition-all ml-0.5 select-none"
-                id="owner-login-discreet-trigger-btn"
-                title="Área do Administrador"
-              >
-                .
-              </span>
-            ) : (
-              <span>.</span>
-            )}
+            <span className="mx-2 text-slate-700">|</span>
+            <button
+              onClick={() => {
+                if (isOwner) {
+                  setIsAdminMode(!isAdminMode);
+                  if (!isAdminMode) {
+                    setTimeout(() => {
+                      document.getElementById('admin-workspace-panel-anchor')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 150);
+                  }
+                } else {
+                  setIsLoginModalOpen(true);
+                }
+              }}
+              className="text-slate-500 hover:text-orange-500 transition-all font-bold cursor-pointer select-none font-sans lowercase tracking-wide"
+              id="discreet-footer-admin-trigger-btn"
+              title="Área de Controle Administrativo"
+            >
+              ⚙️ {isOwner ? (isAdminMode ? 'fechar painel' : 'abrir painel admin') : 'área do proprietário'}
+            </button>
           </p>
         </div>
       </footer>

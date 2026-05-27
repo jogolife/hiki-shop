@@ -58,9 +58,9 @@ export default function CheckoutPortalModal({
   const [isRedirectActive, setIsRedirectActive] = useState(false);
 
   // List of items in this checkout session
-  const items = product ? [product] : cartItems.map(item => item.product);
-  const totalPrice = items.reduce((acc, p) => acc + p.price, 0);
-  const cartLabel = items.map(p => p.title).join(', ');
+  const items = product ? [product].filter(Boolean) : (cartItems || []).map(item => item?.product).filter(Boolean);
+  const totalPrice = items.reduce((acc, p) => acc + (p?.price || 0), 0);
+  const cartLabel = items.map(p => p?.title || '').join(', ');
 
   useEffect(() => {
     if (isOpen) {
@@ -185,12 +185,18 @@ export default function CheckoutPortalModal({
       return;
     }
 
+    if (!totalPrice || totalPrice <= 0) {
+      setPixError('O valor total do carrinho deve ser maior que R$ 0,00 para gerar o QR Code.');
+      return;
+    }
+
     setPixLoading(true);
     setPixError(null);
     localStorage.setItem('vitrine_user_email', payerEmail);
 
     try {
       const customToken = localStorage.getItem('vitrine_mp_access_token') || '';
+      const descriptionText = `Compra Hiki Shop: ${items.map(i => i?.title || 'Produto').join(', ').slice(0, 80)}`;
       
       const res = await fetch('/api/mercadopago/pix', {
         method: 'POST',
@@ -199,14 +205,21 @@ export default function CheckoutPortalModal({
         },
         body: JSON.stringify({
           amount: totalPrice,
-          description: `Compra Hiki Shop: ${items.map(i => i.title).join(', ').slice(0, 80)}`,
+          description: descriptionText,
           email: payerEmail,
           customToken: customToken
         })
       });
 
       if (!res.ok) {
-        throw new Error('Falha ao gerar o QR Code. Por favor, revise suas chaves ou tente novamente.');
+        let serverError = 'Falha ao gerar o QR Code. Por favor, revise suas chaves ou tente novamente.';
+        try {
+          const errData = await res.json();
+          if (errData && errData.error) {
+            serverError = errData.error;
+          }
+        } catch (_) {}
+        throw new Error(serverError);
       }
 
       const data = await res.json();
