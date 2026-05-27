@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { Star, ShoppingCart, ExternalLink, ArrowRight } from 'lucide-react';
+import { Star, ShoppingCart, ExternalLink, ArrowRight, Heart } from 'lucide-react';
 import { Product } from '../types';
 
 interface ProductCardProps {
@@ -14,13 +14,17 @@ interface ProductCardProps {
   onAddToCart: (product: Product, e?: React.MouseEvent) => void;
   onViewDetails: (product: Product) => void;
   onAffiliateRedirect: (product: Product) => void;
+  isInWishlist?: boolean;
+  onToggleWishlist?: (product: Product) => void;
 }
 
 export default function ProductCard({
   product,
   onAddToCart,
   onViewDetails,
-  onAffiliateRedirect
+  onAffiliateRedirect,
+  isInWishlist = false,
+  onToggleWishlist
 }: ProductCardProps) {
   const calculateDiscount = () => {
     if (!product.originalPrice || product.originalPrice <= product.price) return null;
@@ -51,6 +55,21 @@ export default function ProductCard({
           </span>
         )}
       </div>
+
+      {/* Wishlist Toggle Heart Button */}
+      {onToggleWishlist && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleWishlist(product);
+          }}
+          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 hover:bg-white text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-md hover:scale-110 z-20 cursor-pointer border border-slate-100 animate-pulse"
+          title={isInWishlist ? "Remover dos Favoritos (Wishlist)" : "Adicionar aos Favoritos (Wishlist)"}
+          id={`wishlist-btn-${product.id}`}
+        >
+          <Heart className={`w-4.5 h-4.5 transition-colors ${isInWishlist ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`} />
+        </button>
+      )}
 
       {/* Image Block */}
       <div className="relative aspect-square w-full bg-slate-50 overflow-hidden border-b border-slate-100" id={`product-card-img-block-${product.id}`}>

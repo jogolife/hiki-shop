@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { ShoppingCart, Search, User, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { ShoppingCart, Search, User, Sparkles, SlidersHorizontal, Heart } from 'lucide-react';
 import { defaultCategories } from '../data/defaultProducts';
 
 interface HeaderProps {
@@ -17,6 +17,7 @@ interface HeaderProps {
   onAdminClick: () => void;
   isAdminMode: boolean;
   onHomeClick: () => void;
+  onProfileClick: () => void;
   isOwner?: boolean;
   onLoginClick?: () => void;
   onLogoutClick?: () => void;
@@ -32,6 +33,7 @@ export default function Header({
   onAdminClick,
   isAdminMode,
   onHomeClick,
+  onProfileClick,
   isOwner = false,
   onLoginClick,
   onLogoutClick
@@ -112,6 +114,17 @@ export default function Header({
                 <span>🔑 Dono</span>
               </button>
             )}
+
+            {/* Profile & Wishlist button */}
+            <button
+              onClick={onProfileClick}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-600 hover:text-orange-600 hover:bg-orange-50/50 rounded-xl transition-all border border-slate-200 cursor-pointer"
+              title="Meu Perfil & Favoritos"
+              id="profile-toggle-btn"
+            >
+              <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" />
+              <span className="hidden sm:inline">Meu Perfil</span>
+            </button>
 
             {/* Smart Cart Toggle */}
             <button

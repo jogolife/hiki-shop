@@ -19,6 +19,8 @@ import AdminPanel from './components/AdminPanel';
 import SEOSection from './components/SEOSection';
 import AdvancedFilters, { FilterState } from './components/AdvancedFilters';
 import OwnerLoginModal from './components/OwnerLoginModal';
+import UserProfileModal from './components/UserProfileModal';
+import CheckoutPortalModal from './components/CheckoutPortalModal';
 
 import { defaultProducts, defaultBanners } from './data/defaultProducts';
 import { Product, PromoBanner as BannerType, CartItem, AffiliateClick, Review } from './types';
@@ -30,6 +32,12 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [savedProducts, setSavedProducts] = useState<Product[]>([]);
   const [clicks, setClicks] = useState<AffiliateClick[]>([]);
+
+  // Wishlist & Client Profile States
+  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
 
   // Owner Auth & Security States
   const [isOwner, setIsOwner] = useState(false);
@@ -87,6 +95,12 @@ export default function App() {
     const storedSaved = localStorage.getItem('vitrine_saved');
     if (storedSaved) {
       setSavedProducts(JSON.parse(storedSaved));
+    }
+
+    // Wishlist
+    const storedWishlist = localStorage.getItem('vitrine_wishlist');
+    if (storedWishlist) {
+      setWishlist(JSON.parse(storedWishlist));
     }
 
     // Clicks
@@ -191,6 +205,42 @@ export default function App() {
     handleAddToCart(product);
   };
 
+  // --- WISHLIST & ORDERS HANDLERS ---
+  const handleToggleWishlist = (product: Product) => {
+    const exists = wishlist.some((p) => p.id === product.id);
+    let updated: Product[];
+    if (exists) {
+      updated = wishlist.filter((p) => p.id !== product.id);
+    } else {
+      updated = [...wishlist, product];
+    }
+    setWishlist(updated);
+    localStorage.setItem('vitrine_wishlist', JSON.stringify(updated));
+
+    // Dynamic clean toast alert
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-6 right-6 z-[120] bg-gray-950 text-white font-black text-xs px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 border border-gray-800 animate-slide-in';
+    toast.innerHTML = exists 
+      ? `<span>💔</span> Removido da sua Wishlist!` 
+      : `<span>❤️</span> Adicionado à sua Wishlist!`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  };
+
+  const handleSuccessPurchase = (newOrder: any) => {
+    try {
+      const stored = localStorage.getItem('user_orders');
+      let orders = stored ? JSON.parse(stored) : [];
+      orders = [newOrder, ...orders];
+      localStorage.setItem('user_orders', JSON.stringify(orders));
+      
+      // Update local orders list state if profile open
+      saveCartToLocal([]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // --- AFFILIATE CLICK-OUT & REDIRECT FLOW ---
   const triggerAffiliateRedirect = (product: Product) => {
     // Close modal details just in case
@@ -250,13 +300,9 @@ export default function App() {
   // Bulk Checkout / Cart Checkout redirect
   const handleBulkCheckout = () => {
     if (cart.length === 0) return;
-    
-    // Redirect through the first product's affiliate link
-    const leadProduct = cart[0].product;
-    triggerAffiliateRedirect(leadProduct);
-    
-    // Empty the cart
-    saveCartToLocal([]);
+    setCheckoutProduct(null);
+    setIsCheckoutOpen(true);
+    setIsCartOpen(false);
   };
 
   // --- ADMIN FUNCTIONALITY CORES ---
@@ -433,6 +479,7 @@ export default function App() {
         isOwner={isOwner}
         onLoginClick={() => setIsLoginModalOpen(true)}
         onLogoutClick={handleOwnerLogout}
+        onProfileClick={() => setIsProfileOpen(true)}
         onHomeClick={() => {
           setSelectedCategory('all');
           setSearchQuery('');
@@ -515,7 +562,12 @@ export default function App() {
                         product={prod}
                         onAddToCart={handleAddToCart}
                         onViewDetails={(p) => setSelectedProductDetails(p)}
-                        onAffiliateRedirect={triggerAffiliateRedirect}
+                        onAffiliateRedirect={(p) => {
+                          setCheckoutProduct(p);
+                          setIsCheckoutOpen(true);
+                        }}
+                        isInWishlist={wishlist.some((w) => w.id === prod.id)}
+                        onToggleWishlist={handleToggleWishlist}
                       />
                     ))}
                   </div>
@@ -574,7 +626,12 @@ export default function App() {
                             product={prod}
                             onAddToCart={handleAddToCart}
                             onViewDetails={(p) => setSelectedProductDetails(p)}
-                            onAffiliateRedirect={triggerAffiliateRedirect}
+                            onAffiliateRedirect={(p) => {
+                              setCheckoutProduct(p);
+                              setIsCheckoutOpen(true);
+                            }}
+                            isInWishlist={wishlist.some((w) => w.id === prod.id)}
+                            onToggleWishlist={handleToggleWishlist}
                           />
                         ))}
                       </div>
@@ -636,8 +693,35 @@ export default function App() {
         product={selectedProductDetails}
         onClose={() => setSelectedProductDetails(null)}
         onAddToCart={(p) => handleAddToCart(p)}
-        onAffiliateRedirect={triggerAffiliateRedirect}
+        onAffiliateRedirect={(p) => {
+          setCheckoutProduct(p);
+          setIsCheckoutOpen(true);
+          setSelectedProductDetails(null);
+        }}
         onAddNewReview={handleAddModalReview}
+      />
+
+      {/* --- CUSTOMER PROFILE & WISHLIST MODAL --- */}
+      <UserProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        wishlist={wishlist}
+        onToggleWishlist={handleToggleWishlist}
+        onAddToCart={(p) => handleAddToCart(p)}
+        onBuyNow={(p) => {
+          setCheckoutProduct(p);
+          setIsCheckoutOpen(true);
+          setIsProfileOpen(false);
+        }}
+      />
+
+      {/* --- EMBEDDED CHECKOUT & STRIPE GATEWAY PORTAL --- */}
+      <CheckoutPortalModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        product={checkoutProduct}
+        cartItems={cart}
+        onSuccessPurchase={handleSuccessPurchase}
       />
 
       {/* --- REDIRECTING OVERLAY LOADING INDICATOR --- */}

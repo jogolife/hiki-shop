@@ -198,5 +198,63 @@ export const defaultProducts: Product[] = [
     brand: 'Bialetti',
     attributes: { 'Xícaras': '6 Xícaras', 'Material': 'Alumínio' },
     reviews: []
+  },
+  {
+    id: 'prod-viral-1',
+    title: 'Mini Processador de Alimentos Elétrico Recarregável USB',
+    price: 34.90,
+    originalPrice: 69.90,
+    description: 'O processador queridinho do TikTok e Shopee! Triture alho, cebola, temperos e papinhas em segundos com o apertar de um botão. Lâminas reforçadas de aço inoxidável e bateria USB que dura semanas.',
+    image: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?auto=format&fit=crop&q=80&w=600',
+    category: 'cozinha',
+    affiliateLink: 'https://shopee.com.br/Mini-Processador-Alimentos-Eletrico-Usb',
+    rating: 4.8,
+    reviewsCount: 1420,
+    isDailyDeal: true,
+    isFeatured: true,
+    tags: ['Cozinha', 'TikTok Viral', 'Praticidade'],
+    brand: 'Original-Shop',
+    attributes: { 'Alimentação': 'Bateria Recarregável USB', 'Lâminas': '3 Aço Inox' },
+    reviews: [
+      { id: 'rev-viral-1-1', userName: 'Carolina R.', rating: 5, comment: 'Maravilhoso! Trita alho super rápido, economiza um tempo absurdo e é muito facinho de lavar.', date: '2026-05-24' }
+    ]
+  },
+  {
+    id: 'prod-viral-2',
+    title: 'Mop Giratório Inteligente Limpeza Rápida com Balde Balanço',
+    price: 69.90,
+    originalPrice: 129.00,
+    description: 'O campeão de vendas absoluto de utilidades de casa da Shopee. Diga adeus ao contato da mão com sujeira e água suja. Centrifugação suave, esfregão de microfibra de alta absorção alcança todos os cantos e debaixo dos móveis.',
+    image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=600',
+    category: 'casa',
+    affiliateLink: 'https://shopee.com.br/Mop-Giratorio-Inteligente-Limpeza-Rapida',
+    rating: 4.7,
+    reviewsCount: 3105,
+    isDailyDeal: true,
+    isFeatured: true,
+    tags: ['Casa', 'Lider de Vendas', 'Prático'],
+    brand: 'Mop-Brasil',
+    attributes: { 'Balde': '8 Litros', 'Cabo': 'Inox 120cm' },
+    reviews: [
+      { id: 'rev-viral-2-1', userName: 'Carlos E.', rating: 5, comment: 'Super leve e resistente. Minha mãe amou! Limpa a casa inteira em metade do tempo tradicional.', date: '2026-05-25' }
+    ]
+  },
+  {
+    id: 'prod-viral-3',
+    title: 'Ring Light LED de Mesa Portátil com Suporte de Celular Flexível',
+    price: 29.90,
+    originalPrice: 59.90,
+    description: 'Iluminação perfeita para suas videochamadas, gravações de shorts e selfies. Controle completo com 3 tons de luz (quente, fria, mista) e 10 intensidades ajustáveis. Garra de celular com ajuste universal em 360 graus.',
+    image: 'https://images.unsplash.com/photo-1590608897129-79da98d15969?auto=format&fit=crop&q=80&w=600',
+    category: 'gamer',
+    affiliateLink: 'https://shopee.com.br/Ring-Light-Led-Mesa-TikTok',
+    rating: 4.6,
+    reviewsCount: 955,
+    isDailyDeal: false,
+    isFeatured: true,
+    tags: ['Iluminação', 'Youtuber', 'Acessório'],
+    brand: 'Light-Ring',
+    attributes: { 'Alimentação': 'Adaptador USB', 'Tons de Luz': '3 Modos reguláveis' },
+    reviews: []
   }
 ];
