@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Trash2, Heart, Plus, Minus, ExternalLink, ShoppingBag, Sparkles } from 'lucide-react';
 import { CartItem, Product } from '../types';
+import ShippingCalculator from './ShippingCalculator';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -34,6 +35,8 @@ export default function CartDrawer({
   onCheckout
 }: CartDrawerProps) {
   if (!isOpen) return null;
+
+  const [activeShipping, setActiveShipping] = useState<{ id: string; carrier: string; service: string; price: number } | null>(null);
 
   const totalNormal = cartItems.reduce((acc, item) => {
     const fallbackPrice = item.product.originalPrice || item.product.price;
@@ -184,6 +187,18 @@ export default function CartDrawer({
                     })}
                   </div>
                 )}
+
+                {/* Shipping calculator for Cart items */}
+                {cartItems.length > 0 && (
+                  <div className="pt-2">
+                    <ShippingCalculator
+                      isCart={true}
+                      cartTotal={totalDiscount}
+                      onSelectShipping={(opt) => setActiveShipping(opt)}
+                      selectedOptionId={activeShipping?.id}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Saved For Later Section */}
@@ -259,10 +274,18 @@ export default function CartDrawer({
                       R$ {totalNormal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
+                  {activeShipping && (
+                    <div className="flex justify-between uppercase tracking-wider font-extrabold text-[10px] text-slate-500 pb-0.5">
+                      <span>Frete ({activeShipping.carrier} - {activeShipping.service})</span>
+                      <span>
+                        {activeShipping.price === 0 ? 'Grátis' : `R$ ${activeShipping.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-black uppercase tracking-widest text-[11px] text-slate-900 pt-2 border-t border-slate-100">
                     <span>Total com Desconto</span>
                     <span className="text-orange-600 text-base font-black">
-                      R$ {totalDiscount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {(totalDiscount + (activeShipping ? activeShipping.price : 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>

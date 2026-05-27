@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Star, ShoppingCart, ExternalLink, Calendar, Plus, MessageSquare } from 'lucide-react';
 import { Product, Review } from '../types';
+import ShippingCalculator from './ShippingCalculator';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -191,6 +192,11 @@ export default function ProductDetailModal({
                     Aproveitar Oferta
                     <ExternalLink className="w-4 h-4" />
                   </button>
+                </div>
+
+                {/* Integration of Shipping Calculator */}
+                <div className="mt-2 text-slate-850">
+                  <ShippingCalculator product={product} />
                 </div>
               </div>
 

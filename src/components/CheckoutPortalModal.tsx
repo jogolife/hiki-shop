@@ -46,6 +46,13 @@ export default function CheckoutPortalModal({
   const [pixCopied, setPixCopied] = useState(false);
   const [pixTimeLeft, setPixTimeLeft] = useState(300); // 5 minutes
 
+  // Mercado Pago States
+  const [pixPayload, setPixPayload] = useState<{ qr_code: string; qr_code_base64: string; payment_id: string } | null>(null);
+  const [pixLoading, setPixLoading] = useState(false);
+  const [pixError, setPixError] = useState<string | null>(null);
+  const [payerEmail, setPayerEmail] = useState('');
+  const [pixStatusSource, setPixStatusSource] = useState('');
+
   // Redirection Countdown
   const [redirectCount, setRedirectCount] = useState(5);
   const [isRedirectActive, setIsRedirectActive] = useState(false);
@@ -64,6 +71,12 @@ export default function CheckoutPortalModal({
       setPixTimeLeft(300);
       setRedirectCount(5);
       setIsRedirectActive(false);
+      setPixPayload(null);
+      setPixError(null);
+      setPixLoading(false);
+      setPixStatusSource('');
+      const savedEmail = localStorage.getItem('vitrine_user_email') || '';
+      setPayerEmail(savedEmail);
     }
   }, [isOpen]);
 
@@ -94,6 +107,56 @@ export default function CheckoutPortalModal({
     return () => clearInterval(interval);
   }, [isOpen, activeMethod, isRedirectActive, redirectCount]);
 
+  // Mercado Pago Payment Status Polling Effect
+  useEffect(() => {
+    if (!isOpen || activeMethod !== 'pix' || !pixPayload || !pixPayload.payment_id || isSuccess) return;
+
+    let isSubscribed = true;
+    const customToken = localStorage.getItem('vitrine_mp_access_token') || '';
+
+    const checkStatus = async () => {
+      try {
+        const queryParams = customToken ? `?customToken=${encodeURIComponent(customToken)}` : '';
+        const res = await fetch(`/api/mercadopago/status/${pixPayload.payment_id}${queryParams}`);
+        if (res.ok && isSubscribed) {
+          const statusData = await res.json();
+          if (statusData.status === 'approved') {
+            setIsSuccess(true);
+            
+            // Log Order beautifully
+            const newOrder = {
+              id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+              date: new Date().toLocaleDateString('pt-BR'),
+              items: items.map(p => p.title),
+              amount: totalPrice,
+              status: 'Aprovado via Pix',
+              paymentMethod: 'PIX Instantâneo'
+            };
+            onSuccessPurchase(newOrder);
+
+            // Notify with a toast
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 right-6 z-[120] bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-lg animate-fade-in flex items-center gap-2 border border-emerald-550';
+            toast.innerHTML = `<span>⚡</span> Pix recebido e compensado com sucesso!`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao consultar status da transação Pix:', err);
+      }
+    };
+
+    // Consult status instantly and schedule periodic check
+    checkStatus();
+    const intervalId = setInterval(checkStatus, 3000);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(intervalId);
+    };
+  }, [isOpen, activeMethod, pixPayload, isSuccess]);
+
   const handleFinalRedirect = () => {
     if (redirectionType === 'global' && officialStoreLink) {
       window.location.href = officialStoreLink;
@@ -109,10 +172,61 @@ export default function CheckoutPortalModal({
   };
 
   const handleCopyPix = () => {
-    const randomKey = `00020126580014br.gov.bcb.pix0136hikishop2026pay-${Math.random().toString(36).substring(2, 15)}5204000053039865405${totalPrice.toFixed(2)}5802BR5915HikiShopCorp6009SaoPaulo62070503***6304`;
-    navigator.clipboard.writeText(randomKey);
+    if (!pixPayload) return;
+    navigator.clipboard.writeText(pixPayload.qr_code);
     setPixCopied(true);
     setTimeout(() => setPixCopied(false), 2000);
+  };
+
+  const handleGeneratePix = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!payerEmail || !payerEmail.includes('@')) {
+      setPixError('Por favor, informe um e-mail válido para gerar seu Pix.');
+      return;
+    }
+
+    setPixLoading(true);
+    setPixError(null);
+    localStorage.setItem('vitrine_user_email', payerEmail);
+
+    try {
+      const customToken = localStorage.getItem('vitrine_mp_access_token') || '';
+      
+      const res = await fetch('/api/mercadopago/pix', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: totalPrice,
+          description: `Compra Hiki Shop: ${items.map(i => i.title).join(', ').slice(0, 80)}`,
+          email: payerEmail,
+          customToken: customToken
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('Falha ao gerar o QR Code. Por favor, revise suas chaves ou tente novamente.');
+      }
+
+      const data = await res.json();
+      if (data.success && data.qr_code && data.qr_code_base64) {
+        setPixPayload({
+          qr_code: data.qr_code,
+          qr_code_base64: data.qr_code_base64,
+          payment_id: data.payment_id
+        });
+        setPixStatusSource(data.source || 'Mercado Pago');
+        setPixTimeLeft(300); // 5 minutes
+      } else {
+        throw new Error(data.error || 'Erro inesperado ao criar pagamento.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setPixError(err.message || 'Erro de rede. Verifique seu servidor backend.');
+    } finally {
+      setPixLoading(false);
+    }
   };
 
   // Stripe Checkout Launcher
@@ -157,30 +271,26 @@ export default function CheckoutPortalModal({
     }
   };
 
-  // Pix Instant Paid Simulation
-  const handleSimulatePixPaid = () => {
+  // Pix Instant Paid Simulation (Updates status on server database layer)
+  const handleSimulatePixPaid = async () => {
+    if (!pixPayload || !pixPayload.payment_id) return;
+    
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      await fetch('/api/mercadopago/simulate-pay', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ payment_id: pixPayload.payment_id })
+      });
+      // The status polling effect will automatically pick this up from the server and transition to SUCCESS seamlessly!
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar simulação de pagamento.');
+    } finally {
       setIsProcessing(false);
-      setIsSuccess(true);
-
-      const newOrder = {
-        id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-        date: new Date().toLocaleDateString('pt-BR'),
-        items: items.map(p => p.title),
-        amount: totalPrice,
-        status: 'Pago via Pix',
-        paymentMethod: 'PIX Instantâneo'
-      };
-
-      onSuccessPurchase(newOrder);
-
-      const toast = document.createElement('div');
-      toast.className = 'fixed bottom-6 right-6 z-[120] bg-emerald-600 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-lg animate-fade-in flex items-center gap-2 border border-emerald-550';
-      toast.innerHTML = `<span>⚡</span> Pix recebido e compensado com sucesso!`;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
-    }, 1500);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -247,13 +357,6 @@ export default function CheckoutPortalModal({
               </div>
             </div>
 
-            {/* Redirection info for affiliate link */}
-            <div className="bg-orange-50/70 border border-orange-100 p-4 rounded-xl space-y-1.5 mt-6">
-              <span className="text-[9.5px] uppercase font-bold text-orange-600 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-orange-600 animate-pulse" /> Cupom de Parceiro Aplicado!
-              </span>
-              <p className="text-[10px] text-orange-800 leading-normal font-medium">Cuidamos das melhores negociações globais para garantir sempre o menor preço final para você.</p>
-            </div>
           </div>
 
           {/* RIGHT COLUMN: Interactive Gateway Panel */}
@@ -497,94 +600,140 @@ export default function CheckoutPortalModal({
                 {/* METHOD 3: Pagamento Inteligente por PIX com compensação em tempo real */}
                 {activeMethod === 'pix' && (
                   <div className="space-y-4">
-                    <div className="space-y-1.5">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-emerald-600 flex items-center gap-1.5 font-sans">
-                        <QrCode className="w-4.5 h-4.5 text-emerald-600" /> PIX Instantâneo Inteligente
+                    <div className="space-y-1.5 font-sans">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-[#00a189] flex items-center gap-1.5">
+                        <QrCode className="w-4.5 h-4.5 text-[#00a189]" /> PIX Automático Checkout
                       </h3>
-                      <p className="text-xs text-slate-500 leading-normal font-medium">A compensação do PIX é feita de forma imediata trazendo 5% de desconto acumulado adicionado ao final!</p>
+                      <p className="text-xs text-slate-500 leading-normal font-medium">
+                        Gere um código de PIX único pelo Mercado Pago. O processador dará aprovação automática ao sistema de pedidos instantaneamente após o pagamento.
+                      </p>
                     </div>
 
-                    <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col items-center justify-center space-y-4 relative">
-                      {/* Code Time expiration banner */}
-                      <span className="text-[9.5px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full block border border-orange-200">
-                        O QR Code expira em: <span className="font-mono">{formatTime(pixTimeLeft)}</span>
-                      </span>
+                    {!pixPayload ? (
+                      <form onSubmit={handleGeneratePix} className="bg-slate-50 border border-slate-150 p-5 rounded-2xl space-y-4">
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500">Seu endereço de e-mail</label>
+                          <p className="text-[10px] text-slate-400 font-medium">Necessário para registrar o portador e enviar o comprovante oficial de transação.</p>
+                          <input
+                            type="email"
+                            value={payerEmail}
+                            onChange={(e) => setPayerEmail(e.target.value)}
+                            placeholder="exemplo@gmail.com"
+                            className="w-full text-xs p-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-medium text-slate-800"
+                            required
+                          />
+                        </div>
 
-                      {/* Mock QR Code representation */}
-                      <div className="w-36 h-36 bg-white border border-slate-150 p-2.5 rounded-xl shadow-inner flex items-center justify-center relative group">
-                        <svg className="w-full h-full text-slate-900" viewBox="0 0 100 100">
-                          {/* Standard technical aesthetic QR pattern drawing */}
-                          <rect x="5" y="5" width="25" height="25" fill="currentColor" />
-                          <rect x="10" y="10" width="15" height="15" fill="white" />
-                          <rect x="12" y="12" width="11" height="11" fill="currentColor" />
-                          
-                          <rect x="70" y="5" width="25" height="25" fill="currentColor" />
-                          <rect x="75" y="10" width="15" height="15" fill="white" />
-                          <rect x="77" y="12" width="11" height="11" fill="currentColor" />
-                          
-                          <rect x="5" y="70" width="25" height="25" fill="currentColor" />
-                          <rect x="10" y="75" width="15" height="15" fill="white" />
-                          <rect x="12" y="77" width="11" height="11" fill="currentColor" />
+                        {pixError && (
+                          <div className="p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-semibold leading-relaxed">
+                            ⚠️ {pixError}
+                          </div>
+                        )}
 
-                          {/* Dots pattern representation */}
-                          <circle cx="45" cy="15" r="4" fill="currentColor" />
-                          <circle cx="55" cy="25" r="3" fill="currentColor" />
-                          <circle cx="45" cy="45" r="5" fill="currentColor" />
-                          <circle cx="55" cy="55" r="3" fill="currentColor" />
-                          <circle cx="75" cy="45" r="4" fill="currentColor" />
-                          <circle cx="45" cy="75" r="5" fill="currentColor" />
-                          <circle cx="75" cy="75" r="3" fill="currentColor" />
-                          <circle cx="85" cy="85" r="4" fill="currentColor" />
-                          <circle cx="15" cy="45" r="4" fill="currentColor" />
+                        <button
+                          type="submit"
+                          disabled={pixLoading}
+                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-emerald-500/10 transition-all"
+                        >
+                          {pixLoading ? (
+                            <>
+                              <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                              Gerando QR Code...
+                            </>
+                          ) : (
+                            <>
+                              Gerar QR Code PIX | R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col items-center justify-center space-y-4 relative">
+                        {/* Token / Source info */}
+                        <div className="absolute top-2 left-2 text-[9px] font-bold text-slate-400 font-mono uppercase bg-slate-150/50 px-2 py-0.5 rounded">
+                          {pixStatusSource}
+                        </div>
+
+                        {/* Code Time expiration banner */}
+                        <span className="text-[9.5px] font-black uppercase tracking-wider bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full block border border-orange-200">
+                          O QR Code expira em: <span className="font-mono">{formatTime(pixTimeLeft)}</span>
+                        </span>
+
+                        {/* Dynamic QR Code representation */}
+                        <div className="w-40 h-40 bg-white border border-slate-150 p-2.5 rounded-xl shadow-inner flex items-center justify-center relative group">
+                          {pixPayload.qr_code_base64.startsWith("iVB") ? (
+                            <img 
+                              src={`data:image/png;base64,${pixPayload.qr_code_base64}`} 
+                              alt="Mercado Pago QR Code PIX" 
+                              className="w-full h-full object-contain"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <img 
+                              src={`data:image/jpeg;base64,${pixPayload.qr_code_base64}`} 
+                              alt="Mercado Pago QR Code PIX" 
+                              className="w-full h-full object-contain"
+                              referrerPolicy="no-referrer"
+                            />
+                          )}
                           
-                          <rect x="85" y="30" width="10" height="25" fill="currentColor" />
-                          <rect x="30" y="85" width="25" height="10" fill="currentColor" />
-                        </svg>
-                        
-                        {/* Little Pix Badge inside center of Qr representation */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-1 border border-slate-150 rounded">
-                          <span className="text-[10px] font-black text-teal-600 block select-none">PIX</span>
+                          <div className="absolute inset-0 bg-white/90 hidden group-hover:flex flex-col items-center justify-center p-2 text-center transition-all rounded-xl select-none">
+                            <span className="text-[9.5px] font-bold text-slate-800 uppercase">Aponte a Câmera do seu Banco</span>
+                          </div>
+                        </div>
+
+                        <div className="text-center space-y-1 max-w-xs">
+                          <span className="text-[10px] font-black text-[#00a189] uppercase tracking-widest block animate-pulse">⏳ Aguardando pagamento...</span>
+                          <p className="text-[10px] text-slate-400 font-semibold leading-relaxed font-sans">
+                            O sistema está rastreando a compensação do seu Pix em tempo real. Não recarregue esta página.
+                          </p>
+                        </div>
+
+                        {/* Pix actions */}
+                        <div className="w-full space-y-2">
+                          <button
+                            onClick={handleCopyPix}
+                            className="w-full py-2.5 bg-white border border-slate-200 hover:border-slate-800 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                          >
+                            {pixCopied ? (
+                              <>
+                                <Check className="w-4.5 h-4.5 text-emerald-600 animate-pulse" /> Copiado com Sucesso!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-4 h-4 text-slate-500" /> Copiar Pix Copia e Cola
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            onClick={handleSimulatePixPaid}
+                            disabled={isProcessing}
+                            className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-colors"
+                          >
+                            {isProcessing ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Confirmando Recebimento...
+                              </>
+                            ) : (
+                              <>
+                                Simular Compensação do Pix ✓
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            onClick={() => setPixPayload(null)}
+                            className="w-full text-center text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-wider pt-1 block cursor-pointer transition-colors"
+                          >
+                            Voltar / Digitar outro E-mail
+                          </button>
                         </div>
                       </div>
-
-                      {/* Pix details */}
-                      <div className="w-full space-y-2">
-                        <button
-                          onClick={handleCopyPix}
-                          className="w-full py-2.5 bg-white border border-slate-200 hover:border-slate-800 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                        >
-                          {pixCopied ? (
-                            <>
-                              <Check className="w-4 h-4 text-emerald-600" /> Pix Copiado!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-4 h-4 text-slate-500" /> Copiar Código Copia e Cola
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          onClick={handleSimulatePixPaid}
-                          disabled={isProcessing}
-                          className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-colors"
-                        >
-                          {isProcessing ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Validando Compravação...
-                            </>
-                          ) : (
-                            <>
-                              Simular Compensação do Pix ✓
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
-
               </div>
             )}
           </div>
