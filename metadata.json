@@ -1,0 +1,6 @@
+{
+  "name": "Hiki Shop",
+  "description": "Uma vitrine de produtos moderna e responsiva no estilo Shopee e Amazon com painel administrativo integrado para as melhores ofertas e cupons.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
