@@ -703,7 +703,19 @@ export default function App() {
           </p>
 
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-            &copy; 2026 Hiki Shop - Desenvolvido para máxima conversão e SEO otimizado no Google Brasil.
+            &copy; 2026 Hiki Shop - Desenvolvido para máxima conversão e SEO otimizado no Google Brasil
+            {!isOwner ? (
+              <span
+                onClick={() => setIsLoginModalOpen(true)}
+                className="cursor-pointer text-slate-500 hover:text-orange-500 font-black transition-all ml-0.5 select-none"
+                id="owner-login-discreet-trigger-btn"
+                title="Área do Administrador"
+              >
+                .
+              </span>
+            ) : (
+              <span>.</span>
+            )}
           </p>
         </div>
       </footer>

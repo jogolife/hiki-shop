@@ -76,7 +76,7 @@ export default function Header({
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {isOwner ? (
+            {isOwner && (
               <>
                 {/* Admin Badge Toggle */}
                 <button
@@ -103,16 +103,6 @@ export default function Header({
                   Sair
                 </button>
               </>
-            ) : (
-              /* A super subtle lock badge/button that only you know is the lock trigger, keeping it incredibly discreet */
-              <button
-                onClick={onLoginClick}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-700 bg-slate-50/50 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded-md transition-all cursor-pointer"
-                title="Acesso Administrativo"
-                id="owner-login-trigger-btn"
-              >
-                <span>🔑 Dono</span>
-              </button>
             )}
 
             {/* Profile & Wishlist button */}
