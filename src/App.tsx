@@ -41,7 +41,7 @@ export default function App() {
 
   // Official Store Redirection Settings
   const [officialStoreLink, setOfficialStoreLink] = useState('https://shopee.com.br/hiki-ofertas');
-  const [redirectionType, setRedirectionType] = useState<'product' | 'global'>('global');
+  const [redirectionType, setRedirectionType] = useState<'product' | 'global'>('product');
 
   // Owner Auth & Security States
   const [isOwner, setIsOwner] = useState(false);
@@ -129,8 +129,8 @@ export default function App() {
     if (storedRedirType) {
       setRedirectionType(storedRedirType as 'product' | 'global');
     } else {
-      localStorage.setItem('vitrine_redirection_type', 'global');
-      setRedirectionType('global');
+      localStorage.setItem('vitrine_redirection_type', 'product');
+      setRedirectionType('product');
     }
   }, []);
 
