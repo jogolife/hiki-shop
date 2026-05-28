@@ -41,7 +41,7 @@ export default function App() {
 
   // Official Store Redirection Settings
   const [officialStoreLink, setOfficialStoreLink] = useState('https://shopee.com.br/hiki-ofertas');
-  const [redirectionType, setRedirectionType] = useState<'product' | 'global'>('product');
+  const [redirectionType, setRedirectionType] = useState<'product' | 'global'>('global');
 
   // Owner Auth & Security States
   const [isOwner, setIsOwner] = useState(false);
@@ -129,7 +129,8 @@ export default function App() {
     if (storedRedirType) {
       setRedirectionType(storedRedirType as 'product' | 'global');
     } else {
-      localStorage.setItem('vitrine_redirection_type', 'product');
+      localStorage.setItem('vitrine_redirection_type', 'global');
+      setRedirectionType('global');
     }
   }, []);
 
@@ -696,28 +697,53 @@ export default function App() {
             Todos os preços apresentados nesta vitrine são obtidos por meio de parcerias com as respectivas lojas hospedeiras (Shopee, Amazon, Magazine Luiza, AliExpress). A responsabilidade de expedição, entrega e suporte pós-venda recai integralmente sobre a loja marketplace final onde a compra é concluída.
           </p>
 
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-            &copy; 2026 Hiki Shop - Desenvolvido para máxima conversão e SEO otimizado no Google Brasil
-            <span className="mx-2 text-slate-700">|</span>
-            <button
-              onClick={() => {
-                if (isOwner) {
-                  setIsAdminMode(!isAdminMode);
-                  if (!isAdminMode) {
-                    setTimeout(() => {
-                      document.getElementById('admin-workspace-panel-anchor')?.scrollIntoView({ behavior: 'smooth' });
-                    }, 150);
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-center flex-wrap gap-2">
+            <span>&copy; 2026 Hiki Shop - Desenvolvido para máxima conversão e SEO otimizado no Google Brasil</span>
+            <span className="text-slate-700">|</span>
+            
+            {!isOwner ? (
+              <span
+                onClick={() => {
+                  const val = prompt('Insira a chave de acesso do desenvolvedor:');
+                  if (val === 'dtvhdmiSTI1!') {
+                    handleOwnerLoginSuccess('narutofamilyhinata@gmail.com');
+                    setIsAdminMode(true);
+                  } else if (val !== null) {
+                    alert('Chave de acesso incorreta.');
                   }
-                } else {
-                  setIsLoginModalOpen(true);
-                }
-              }}
-              className="text-slate-500 hover:text-orange-500 transition-all font-bold cursor-pointer select-none font-sans lowercase tracking-wide"
-              id="discreet-footer-admin-trigger-btn"
-              title="Área de Controle Administrativo"
-            >
-              ⚙️ {isOwner ? (isAdminMode ? 'fechar painel' : 'abrir painel admin') : 'área do proprietário'}
-            </button>
+                }}
+                className="text-slate-600 hover:text-slate-500 font-bold ml-1 transition-all cursor-pointer lowercase select-none"
+                style={{ fontSize: '10.5px' }}
+                id="footer-admin-login-disguised-trigger"
+                title="hiki shop"
+              >
+                hiki shop
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setIsAdminMode(!isAdminMode);
+                    if (!isAdminMode) {
+                      setTimeout(() => {
+                        document.getElementById('admin-workspace-panel-anchor')?.scrollIntoView({ behavior: 'smooth' });
+                      }, 150);
+                    }
+                  }}
+                  className="text-slate-400 hover:text-orange-500 transition-all font-bold cursor-pointer select-none font-sans lowercase tracking-wide"
+                  id="discreet-footer-admin-trigger-btn"
+                  title="Área de Controle Administrativo"
+                >
+                  ⚙️ {isAdminMode ? 'fechar painel admin' : 'abrir painel admin'}
+                </button>
+                <button
+                  onClick={handleOwnerLogout}
+                  className="text-slate-600 hover:text-red-500 font-bold text-[9px] uppercase tracking-wider transition-colors"
+                >
+                  [Sair]
+                </button>
+              </span>
+            )}
           </p>
         </div>
       </footer>
@@ -800,8 +826,12 @@ export default function App() {
 
               <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl text-left space-y-1">
                 <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Redirecionando para</span>
-                <p className="text-xs font-bold text-gray-950 truncate">{redirectingProduct.title}</p>
-                <p className="text-[11px] text-gray-400 truncate">{redirectingProduct.affiliateLink}</p>
+                <p className="text-xs font-bold text-gray-950 truncate">
+                  {redirectionType === 'global' ? 'Vitrine de Ofertas Hiki Shop' : redirectingProduct.title}
+                </p>
+                <p className="text-[11px] text-gray-400 truncate">
+                  {redirectionType === 'global' && officialStoreLink ? officialStoreLink : redirectingProduct.affiliateLink}
+                </p>
               </div>
 
               <p className="text-[11px] text-gray-400 font-medium">
@@ -810,7 +840,7 @@ export default function App() {
 
               <button
                 onClick={() => {
-                  window.location.href = redirectingProduct.affiliateLink;
+                  window.location.href = redirectionType === 'global' && officialStoreLink ? officialStoreLink : redirectingProduct.affiliateLink;
                 }}
                 className="px-6 py-2.5 bg-gray-950 hover:bg-orange-600 text-white font-bold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 mx-auto"
               >

@@ -266,14 +266,7 @@ async function startServer() {
               description: description || "Pedido Hiki Shop",
               payment_method_id: "pix",
               payer: {
-                email: email || "comprador@hikishop.com",
-                first_name: "Cliente",
-                last_name: "Hiki",
-                identification: {
-                  type: "CPF",
-                  // Generic test CPF for sandbox transactions
-                  number: "19100000000"
-                }
+                email: email || "comprador@hikishop.com"
               }
             })
           });
@@ -296,13 +289,27 @@ async function startServer() {
               });
             } else {
               console.warn("[Mercado Pago] Resposta da API não continha os dados do QR code:", data);
+              return res.status(400).json({ error: "Resposta do Mercado Pago não possui as chaves point_of_interaction.transaction_data.qr_code_base64" });
             }
           } else {
             const errBody = await mpResponse.text();
             console.error(`[Mercado Pago] Erro HTTP ${mpResponse.status}:`, errBody);
+            let userFriendlyError = "Erro no Mercado Pago";
+            try {
+              const errJson = JSON.parse(errBody);
+              if (errJson.message) {
+                userFriendlyError = `${errJson.message} (Código: ${errJson.error || errJson.status})`;
+              } else if (errJson.cause && Array.isArray(errJson.cause) && errJson.cause[0]?.description) {
+                userFriendlyError = errJson.cause[0].description;
+              } else if (errJson.cause?.description) {
+                userFriendlyError = errJson.cause.description;
+              }
+            } catch (_) {}
+            return res.status(400).json({ error: `Mercado Pago: ${userFriendlyError}` });
           }
-        } catch (apiErr) {
+        } catch (apiErr: any) {
           console.error("[Mercado Pago] Erro ao conectar na API:", apiErr);
+          return res.status(500).json({ error: `Erro de conexão com Mercado Pago: ${apiErr.message || apiErr}` });
         }
       }
 

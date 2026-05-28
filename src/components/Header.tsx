@@ -76,35 +76,6 @@ export default function Header({
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {isOwner && (
-              <>
-                {/* Admin Badge Toggle */}
-                <button
-                  onClick={onAdminClick}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all border ${
-                    isAdminMode
-                      ? 'bg-orange-50 text-orange-600 border-orange-200'
-                      : 'text-slate-600 hover:text-slate-800 bg-slate-50 border-slate-200 hover:bg-slate-100'
-                  }`}
-                  title="Painel Admin"
-                  id="admin-panel-toggle-btn"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{isAdminMode ? 'Painel Ativo' : 'Painel Admin'}</span>
-                </button>
-
-                {/* Secret Log-out button */}
-                <button
-                  onClick={onLogoutClick}
-                  className="px-2.5 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all cursor-pointer border border-transparent"
-                  title="Sair do Modo Dono"
-                  id="owner-logout-btn"
-                >
-                  Sair
-                </button>
-              </>
-            )}
-
             {/* Profile & Wishlist button */}
             <button
               onClick={onProfileClick}

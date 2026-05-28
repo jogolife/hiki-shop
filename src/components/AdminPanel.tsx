@@ -68,11 +68,9 @@ export default function AdminPanel({
   const handleSaveSettings = () => {
     onUpdateOfficialStoreLink(officialStoreLinkState);
     onUpdateRedirectionType(redirectionTypeState);
-    localStorage.setItem('vitrine_mp_access_token', mpAccessToken.trim());
-    localStorage.setItem('vitrine_mp_public_key', mpPublicKey.trim());
     
     // Alert success beautifully
-    alert('✓ Configurações da Loja e Chaves do Mercado Pago salvas com sucesso!');
+    alert('✓ Configurações de Redirecionamento da Loja salvas com sucesso!');
   };
 
   // Add Product Form State
@@ -826,38 +824,6 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Mercado Pago API Configuration */}
-              <div className="pt-5 border-t border-gray-150 space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-gray-700 uppercase tracking-wider">Integração do Mercado Pago (PIX)</span>
-                  <span className="bg-blue-100 text-blue-700 font-extrabold text-[8.5px] px-2 py-0.5 rounded uppercase font-mono">PIX INSTANTÂNEO</span>
-                </div>
-                <p className="text-[11px] text-gray-400 font-medium leading-relaxed font-sans">
-                  Insira suas credenciais abaixo para gerar QR Codes e Copia e Cola reales do Mercado Pago via PIX. Caso deixe em branco, o sistema utilizará o <strong>Motor de Simulação Resiliente</strong> inteligente, mantendo o fluxo de transação 100% testável.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Access Token (Prod ou Dev)</label>
-                    <input
-                      type="password"
-                      value={mpAccessToken}
-                      onChange={(e) => setMpAccessToken(e.target.value)}
-                      placeholder="APP_USR-xxxxxxxxxxxxxxxx-xxxx"
-                      className="w-full text-xs p-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 font-mono text-slate-700"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">Public Key (Opcional)</label>
-                    <input
-                      type="text"
-                      value={mpPublicKey}
-                      onChange={(e) => setMpPublicKey(e.target.value)}
-                      placeholder="APP_USR-xxxxxxxx-xxxx"
-                      className="w-full text-xs p-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 font-mono text-slate-700"
-                    />
-                  </div>
-                </div>
-              </div>
 
               <div className="pt-4 border-t border-gray-150 flex justify-end">
                 <button

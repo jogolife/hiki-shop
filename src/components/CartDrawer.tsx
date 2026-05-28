@@ -113,21 +113,34 @@ export default function CartDrawer({
 
                       return (
                         <div key={item.product.id} className="p-3 bg-white border border-slate-200 rounded-lg hover:border-slate-800 transition-all flex gap-3 relative shadow-sm">
-                          {/* Product Thumbnail */}
-                          <div className="w-14 h-14 bg-slate-50 overflow-hidden shrink-0 border border-slate-200 rounded-md">
+                          {/* Product Thumbnail (links directly with affiliate token) */}
+                          <a
+                            href={item.product.affiliateLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-14 h-14 bg-slate-50 overflow-hidden shrink-0 border border-slate-200 rounded-md block hover:border-orange-500 transition-all select-none"
+                            title="Ver produto na Loja Oficial"
+                          >
                             <img
                               src={item.product.image}
                               alt={item.product.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover hover:scale-105 transition-transform"
                               referrerPolicy="no-referrer"
                             />
-                          </div>
+                          </a>
 
                           {/* Info Column */}
                           <div className="flex-1 min-w-0 pr-6">
-                            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight line-clamp-1">
+                            <a
+                              href={item.product.affiliateLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs font-black text-slate-900 uppercase tracking-tight line-clamp-1 hover:text-orange-600 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+                              title="Ir para a loja oficial do anunciante"
+                            >
                               {item.product.title}
-                            </h4>
+                              <ExternalLink className="w-3 h-3 hover:text-orange-600 shrink-0 inline" />
+                            </a>
                             <div className="flex items-center gap-1.5 mt-1">
                               <span className="text-xs font-black text-slate-900">
                                 R$ {item.product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -170,6 +183,18 @@ export default function CartDrawer({
                                 <Heart className="w-3 h-3" />
                                 Salvar
                               </button>
+
+                              {/* Direct affiliate link button */}
+                              <a
+                                href={item.product.affiliateLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-extrabold text-orange-600 hover:text-orange-700 flex items-center gap-1 cursor-pointer transition-colors uppercase tracking-wider"
+                                title="Comprar na Loja Oficial"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                Comprar
+                              </a>
                             </div>
                           </div>
 

@@ -110,7 +110,7 @@ export default function UserProfileModal({
                 </div>
                 <div>
                   <h2 className="text-base font-black tracking-tight font-sans line-clamp-1 truncate uppercase">{userName}</h2>
-                  <p className="text-[10.5px] text-orange-400 font-extrabold uppercase tracking-widest">{paymentPreference === 'pix' ? 'Prefere PIX ⚡' : 'Prefere Cartão 💳'}</p>
+                  <p className="text-[10.5px] text-orange-400 font-extrabold uppercase tracking-widest">Cliente Conectado ✨</p>
                 </div>
               </div>
 
@@ -298,32 +298,16 @@ export default function UserProfileModal({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[9.5px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-orange-500" /> Celular / WhatsApp
-                      </label>
-                      <input
-                        type="text"
-                        value={userPhone}
-                        onChange={(e) => setUserPhone(e.target.value)}
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-500 text-slate-800 font-bold"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9.5px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
-                        <CreditCard className="w-3.5 h-3.5 text-orange-500" /> Método de Pagamento Preferido
-                      </label>
-                      <select
-                        value={paymentPreference}
-                        onChange={(e) => setPaymentPreference(e.target.value as 'pix' | 'card')}
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-500 text-slate-800 font-bold cursor-pointer"
-                      >
-                        <option value="pix">PIX Inteligente ⚡</option>
-                        <option value="card">Cartão de Crédito (via Stripe) 💳</option>
-                      </select>
-                    </div>
+                  <div className="space-y-1">
+                    <label className="text-[9.5px] uppercase font-black text-slate-400 tracking-wider flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5 text-orange-500" /> Celular / WhatsApp
+                    </label>
+                    <input
+                      type="text"
+                      value={userPhone}
+                      onChange={(e) => setUserPhone(e.target.value)}
+                      className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-orange-500 text-slate-800 font-bold"
+                    />
                   </div>
 
                   <div className="space-y-1">
