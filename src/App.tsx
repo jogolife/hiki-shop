@@ -21,6 +21,7 @@ import AdvancedFilters, { FilterState } from './components/AdvancedFilters';
 import OwnerLoginModal from './components/OwnerLoginModal';
 import UserProfileModal from './components/UserProfileModal';
 import CheckoutPortalModal from './components/CheckoutPortalModal';
+import AdSenseUnit from './components/AdSenseUnit';
 
 import { defaultProducts, defaultBanners } from './data/defaultProducts';
 import { Product, PromoBanner as BannerType, CartItem, AffiliateClick, Review } from './types';
@@ -576,6 +577,11 @@ export default function App() {
             </section>
           )}
 
+          {/* SECTION: GOOGLE ADSENSE INTEGRATED AD */}
+          <div className="my-2" id="top-adsense-integration-unit">
+            <AdSenseUnit slot="8182930412" categoryHint={selectedCategory || 'Geral'} />
+          </div>
+
           {/* SECTION: GENERAL PRODUCTS GRID */}
           <section className="space-y-4" id="regular-catalog-section-view">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
@@ -641,6 +647,11 @@ export default function App() {
               </div>
             </div>
           </section>
+
+          {/* SECTION: GOOGLE ADSENSE INTEGRATED BOTTOM BANNER */}
+          <div className="my-6 border-t border-b border-slate-200/50 py-4" id="bottom-adsense-integration-unit">
+            <AdSenseUnit slot="9876543210" categoryHint="Geral" />
+          </div>
 
           {/* SECTION: INTEGRATED GOOGLE SEO OPTIMIZER DEMONSTRATION PANEL */}
           <section id="integrated-seo-demonstration">
